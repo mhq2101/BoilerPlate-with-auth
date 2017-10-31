@@ -8,7 +8,7 @@ const passport = require('passport');
 const User = require('../db/models/users.js')
 
 if (process.env.NODE_ENV === 'development') {
-  require('../localSecrets'); // this will mutate the process.env object with your secrets.
+  require('../localSecrets.js'); // this will mutate the process.env object with your secrets.
 }
 //body parsing middleware
 app.use(bodyParser.json());
