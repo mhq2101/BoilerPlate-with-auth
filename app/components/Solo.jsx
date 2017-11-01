@@ -25,9 +25,15 @@ class Solo extends React.Component {
       addWave: false,
       showSidebar: false,
       selected: null,
-      tracks: []
+      tracks: [],
+      currentChunks: [],
+      recorder: '',
+      newRecorder: true
+
     })
 
+    this.startRecording = this.startRecording.bind(this)
+    this.stopRecording = this.stopRecording.bind(this)
     this.adjustGainValue = this.adjustGainValue.bind(this)
     this.audioConnect = this.audioConnect.bind(this);
     this.audioDisconnect = this.audioDisconnect.bind(this);
@@ -74,12 +80,81 @@ class Solo extends React.Component {
       this.props.setDrop(false)
     }
 
+    // var recorder = new MediaRecorder(this.props.audioStream);
+    // this.setState({
+    //   recorder: recorder,
+    //   newRecorder: true
+    // })
+
+
   }
 
   componentDidUpdate() {
+    console.log(this.state.currentChunks)
     if (this.state.addWave) {
       this.addWaveform(this.state.tracks[this.state.tracks.length - 1].buffer, this.state.tracks.length - 1)
     }
+    if (this.props.audioStream && this.state.newRecorder) {
+      var recorder = new MediaRecorder(this.props.audioStream);
+      recorder.ondataavailable = (e) => {
+
+        this.setState({
+          currentChunks: this.state.currentChunks.concat([e.data])
+        })
+      }
+      recorder.onstop = (e) => {
+        console.log("data available after MediaRecorder.stop() called.");
+        console.log('dataAvailable', this.state.currentChunks)
+        var blob = new Blob(this.state.currentChunks, { 'type': 'audio/ogg; codecs=opus' });
+        console.log(blob)
+        let fileReader = new FileReader();
+        let arrayBuffer;
+
+        fileReader.onloadend = () => {
+          arrayBuffer = fileReader.result;
+
+          this.props.audioCtx.audioContext.decodeAudioData(arrayBuffer, (buffer) => {
+            var source = this.props.audioCtx.audioContext.createBufferSource();
+            source.buffer = buffer
+            console.log(source)
+            this.setState({
+              tracks: this.state.tracks.concat([{
+                name: 'newRecordingDoe',
+                track: source,
+                buffer,
+                filters: []
+              }])
+            })
+          }, function (e) {
+            console.error('There was an error decoding ' + file.name);
+          });
+        }
+
+        fileReader.readAsArrayBuffer(blob);
+        this.setState({
+          currentChunks: []
+        })
+      }
+      this.setState({
+        recorder: recorder,
+        newRecorder: false
+      })
+
+
+    }
+  }
+
+  startRecording() {
+    this.state.recorder.start();
+    console.log(this.state.recorder.state);
+    console.log("recorder started");
+
+  }
+
+  stopRecording() {
+    this.state.recorder.stop();
+    console.log(this.state.recorder.state);
+    console.log("recorder stopped");
   }
 
   addFilter(track, filters, filter) {
@@ -103,11 +178,11 @@ class Solo extends React.Component {
   removeFilter(track, filters, index) {
     let currentFilter = filters[index];
     currentFilter.disconnect()
-    let lastFilter = filters[index-1];
-    let nextFilter = filters[index+1]
+    let lastFilter = filters[index - 1];
+    let nextFilter = filters[index + 1]
     if (lastFilter) {
       lastFilter.disconnect()
-      if(nextFilter) {
+      if (nextFilter) {
         lastFilter.connect(nextFilter)
       }
       else {
@@ -115,7 +190,7 @@ class Solo extends React.Component {
       }
     }
     else {
-      if(nextFilter) {
+      if (nextFilter) {
         track.connect(nextFilter)
       }
       else {
@@ -214,7 +289,6 @@ class Solo extends React.Component {
   }
 
   render() {
-    console.log(this.state.tracks)
     return (
       <div id="container">
         <section id="recordings">
@@ -249,7 +323,7 @@ class Solo extends React.Component {
                     }
                   }}>
                     <div>{audio.name}</div>
-                    <canvas ref={`canvas${ind}`} width={1250} height={300} />
+                    <canvas ref={`canvas${ind}`} width={800} height={300} />
                   </div>
                   {
                     this.state.selected === ind ? (<FilterList track={audio} addFilter={this.addFilter} removeFilter={this.removeFilter} />) : (<div></div>)
@@ -265,6 +339,17 @@ class Solo extends React.Component {
             evt.preventDefault();
             this.playAll();
           }}>Play All!!</button>
+
+          <button onClick={(evt) => {
+            evt.preventDefault();
+            this.startRecording();
+          }}>Start Recording</button>
+
+          <button onClick={(evt) => {
+            evt.preventDefault();
+            this.stopRecording();
+          }}>Stop Recording</button>
+
           {/*<Master />
           <MicMaster />*/}
         </section>
