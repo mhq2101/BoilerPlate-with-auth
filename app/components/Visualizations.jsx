@@ -6,10 +6,12 @@ import Gain from './Gain';
 import { joinChatRoom } from '../webRTC/client.jsx'
 import MicMaster from './MicMaster'
 import Footer from './Footer'
+import * as d3 from "d3";
+
 
 /* -----------------    COMPONENT     ------------------ */
 
-class Home extends React.Component {
+class Visualizations extends React.Component {
 
   constructor(props) {
     super(props);
@@ -24,8 +26,7 @@ class Home extends React.Component {
     })
 
     this.adjustGainValue = this.adjustGainValue.bind(this)
-    this.audioConnect = this.audioConnect.bind(this);
-    this.audioDisconnect = this.audioDisconnect.bind(this);
+
 
   }
 
@@ -45,8 +46,6 @@ class Home extends React.Component {
             thisContext.props.addName(name)
             console.log('Added the variable "' + name + '"" to the window.');
           } else {
-            thisContext.props.addBuffer(buffer);
-            thisContext.props.addName(name)
             window[name + '-sample'] = buffer;
             console.log('Added the variable window["' + name + '-sample"] to the window.');
           }
@@ -54,53 +53,52 @@ class Home extends React.Component {
       });
       this.props.setDrop(false)
     }
-    joinChatRoom('lobby')
 
-    const {analyser} = this.props.audioCtx.master
-    analyser.fftSize = 1024;
-    var bufferLength = analyser.frequencyBinCount;
-    var dataArray = new Uint8Array(bufferLength);
-    analyser.getByteTimeDomainData(dataArray);
+    // const { analyser } = this.props.audioCtx.master
+    // analyser.fftSize = 1024;
+    // var bufferLength = analyser.frequencyBinCount;
+    // var dataArray = new Uint8Array(bufferLength);
+    // analyser.getByteTimeDomainData(dataArray);
 
-    // Get a canvas defined with ID "oscilloscope"
-    var canvas = this.refs.visualizer;
-    var canvasCtx = canvas.getContext("2d");
-
-
-    var WIDTH = canvas.width;
-    var HEIGHT = canvas.height;
+    // // Get a canvas defined with ID "oscilloscope"
+    // var canvas = this.refs.visualizer;
+    // var canvasCtx = canvas.getContext("2d");
 
 
-    // analyser.fftSize = 256;
-    var bufferLength = analyser.frequencyBinCount;
-    console.log(bufferLength);
-    var dataArray = new Uint8Array(bufferLength);
+    // var WIDTH = canvas.width;
+    // var HEIGHT = canvas.height;
 
-    canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
 
-    var draw = function () {
-      var drawVisual = requestAnimationFrame(draw);
+    // // analyser.fftSize = 256;
+    // var bufferLength = analyser.frequencyBinCount;
+    // console.log(bufferLength);
+    // var dataArray = new Uint8Array(bufferLength);
 
-      analyser.getByteFrequencyData(dataArray);
+    // canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
 
-      canvasCtx.fillStyle = 'rgb(0, 0, 0)';
-      canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
-      var barWidth = (WIDTH / bufferLength) * 2.5;
-      var barHeight;
-      var x = 0;
+    // var draw = function () {
+    //   var drawVisual = requestAnimationFrame(draw);
 
-      for (var i = 0; i < bufferLength; i++) {
-        barHeight = 5 * dataArray[i];
+    //   analyser.getByteFrequencyData(dataArray);
 
-        canvasCtx.fillStyle = 'rgb(' + (barHeight * 5) + ',50,50)';
-        canvasCtx.fillStyle = 'violet'
-        canvasCtx.fillRect(x, HEIGHT - barHeight / 2, barWidth, barHeight / 2);
+    //   canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+    //   canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+    //   var barWidth = (WIDTH / bufferLength) * 2.5;
+    //   var barHeight;
+    //   var x = 0;
 
-        x += barWidth + 1;
-      }
-    };
+    //   for (var i = 0; i < bufferLength; i++) {
+    //     barHeight = 5 * dataArray[i];
 
-    draw();
+    //     canvasCtx.fillStyle = 'rgb(' + (barHeight + 100) + ',50,50)';
+    //     canvasCtx.fillStyle = 'violet'
+    //     canvasCtx.fillRect(x, HEIGHT - barHeight / 2, barWidth, barHeight / 2);
+
+    //     x += barWidth + 1;
+    //   }
+    // };
+
+    // draw();
 
 
 
@@ -134,6 +132,8 @@ class Home extends React.Component {
 
 
   render() {
+    
+
 
     // if (this.props.audioSource !== null) {
     //   this.props.audioSource.onended = (event) => {
@@ -141,7 +141,7 @@ class Home extends React.Component {
     //   }
     // }
     return (
-      <div>
+      <div id='container'>
 
         {
           this.state.showSidebar ? (
@@ -158,50 +158,16 @@ class Home extends React.Component {
           ) : <div></div>
         }
 
+        <section>
+          <svg ref='visualizer' width="400" height="100"> the ting go skrrra
+          </svg>
 
-        <section id="carousel">
-          <div id="carousel-text">
-            <h1>WebDAW: Collaborative Music Making and Audio Hangout</h1>
-            <h2>
-              <button onClick={(evt) => {
-                evt.preventDefault();
-                this.setState({
-                  showSidebar: true ^ this.state.showSidebar
-                })
-              }}>Show Playlist</button>
-              <button className="blue" onClick={(event) => this.audioConnect(event)}>Connect Microphone</button>
-              <button className="blue" onClick={(event) => this.audioDisconnect(event)}>DisConnect Microphone</button>
-            </h2>
-          </div>
-          {/*<img className="carousel-image" src="https://www.googleplaymusicdesktopplayer.com/img/par1.jpg" />*/}
-          <canvas className="carousel-image" ref="visualizer" width={1250} height={1250} />
-          <img className="carousel-image hidden" src="images/bg/city.jpg" />
-          <img className="carousel-image hidden" src="images/bg/underwater.jpg" />
-          <img className="carousel-image hidden" src="images/bg/brightsun.jpg" />
         </section>
 
 
-        <div className="w3-overlay w3-animate-opacity" id="myOverlay"></div>
 
-        <section id="about">
-          <h2>About</h2>
-          <div >
-            <p className="flex">
-              WebDAW is fully functioning Digital Audio Workstation, built to make and share in the music making process with your peers
-      </p>
-            <div id="aboutmockup">
-            </div>
-          </div>
-        </section>
 
-        <section id="mixing-board">
-          <Master />
-          <MicMaster />
-        </section>
 
-        <section id="playbar">
-          <Footer />
-        </section>
       </div>
 
     )
@@ -248,4 +214,4 @@ const mapState = ({ auth, audioStream, audioBuffers, audioNames, audioSource, cu
 const mapDispatch = { setSource, addBuffer, addName, setCurrent, setTime, setStart, setStreamSource, setMicConnection, setMusicPlaying, setDrop };
 
 
-export default connect(mapState, mapDispatch)(Home);
+export default connect(mapState, mapDispatch)(Visualizations);

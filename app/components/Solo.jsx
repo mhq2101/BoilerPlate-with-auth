@@ -64,8 +64,6 @@ class Solo extends React.Component {
                 filters: []
               }])
             })
-            // thisContext.props.addBuffer(buffer);
-            // thisContext.props.addName(name)
             thisContext.setState({
               addWave: true
             })
@@ -80,13 +78,51 @@ class Solo extends React.Component {
       this.props.setDrop(false)
     }
 
-    // var recorder = new MediaRecorder(this.props.audioStream);
-    // this.setState({
-    //   recorder: recorder,
-    //   newRecorder: true
-    // })
+    const { analyser } = this.props.audioCtx.master
+    analyser.fftSize = 1024;
+    var bufferLength = analyser.frequencyBinCount;
+    var dataArray = new Uint8Array(bufferLength);
+    analyser.getByteTimeDomainData(dataArray);
+
+    // Get a canvas defined with ID "oscilloscope"
+    var canvas = this.refs.visualizer;
+    var canvasCtx = canvas.getContext("2d");
 
 
+    var WIDTH = canvas.width;
+    var HEIGHT = canvas.height;
+
+
+    // analyser.fftSize = 256;
+    var bufferLength = analyser.frequencyBinCount;
+    console.log(bufferLength);
+    var dataArray = new Uint8Array(bufferLength);
+
+    canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+
+    var draw = function () {
+      var drawVisual = requestAnimationFrame(draw);
+
+      analyser.getByteFrequencyData(dataArray);
+
+      canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+      canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+      var barWidth = (WIDTH / bufferLength) * 2.5;
+      var barHeight;
+      var x = 0;
+
+      for (var i = 0; i < bufferLength; i++) {
+        barHeight = 5 * dataArray[i];
+
+        canvasCtx.fillStyle = 'rgb(' + (barHeight + 100) + ',50,50)';
+        canvasCtx.fillStyle = 'violet'
+        canvasCtx.fillRect(x, HEIGHT - barHeight / 2, barWidth, barHeight / 2);
+
+        x += barWidth + 1;
+      }
+    };
+
+    draw();
   }
 
   componentDidUpdate() {
@@ -123,7 +159,8 @@ class Solo extends React.Component {
                 track: source,
                 buffer,
                 filters: []
-              }])
+              }]),
+              addWave: true
             })
           }, function (e) {
             console.error('There was an error decoding ' + file.name);
@@ -145,6 +182,7 @@ class Solo extends React.Component {
   }
 
   startRecording() {
+    this.playAll();
     this.state.recorder.start();
     console.log(this.state.recorder.state);
     console.log("recorder started");
@@ -153,6 +191,9 @@ class Solo extends React.Component {
 
   stopRecording() {
     this.state.recorder.stop();
+    this.state.tracks.forEach(track => {
+      track.track.disconnect()
+    })
     console.log(this.state.recorder.state);
     console.log("recorder stopped");
   }
@@ -162,12 +203,12 @@ class Solo extends React.Component {
     if (lastFilter) {
       lastFilter.disconnect();
       lastFilter.connect(filter);
-      filter.connect(this.props.audioCtx.audioContext.destination)
+      filter.connect(this.props.audioCtx.master.analyser)
     }
     else {
       track.disconnect();
       track.connect(filter);
-      filter.connect(this.props.audioCtx.audioContext.destination)
+      filter.connect(this.props.audioCtx.master.analyser)
     }
     filters.push(filter)
     this.setState({
@@ -186,7 +227,7 @@ class Solo extends React.Component {
         lastFilter.connect(nextFilter)
       }
       else {
-        lastFilter.connect(this.props.audioCtx.audioContext.destination)
+        lastFilter.connect(this.props.audioCtx.master.analyser)
       }
     }
     else {
@@ -194,7 +235,7 @@ class Solo extends React.Component {
         track.connect(nextFilter)
       }
       else {
-        track.connect(this.props.audioCtx.audioContext.destination)
+        track.connect(this.props.audioCtx.master.analyser)
       }
     }
     filters.splice(index, 1)
@@ -270,13 +311,18 @@ class Solo extends React.Component {
         for (var k = 1; k < filters.length; k++) {
           filters[k - 1].connect(filters[k])
         }
-        filters[filters.length - 1].connect(this.props.audioCtx.audioContext.destination)
+        filters[filters.length - 1].connect(this.props.audioCtx.master.analyser)
       } else {
-        tracks[i].track.connect(this.props.audioCtx.audioContext.destination)
+        tracks[i].track.connect(this.props.audioCtx.master.analyser)
       }
     }
-    tracks.forEach(track => {
-      track.track.start()
+    tracks.forEach((track, ind) => {
+      if (!(ind === 0)) {
+        track.track.start(0, .30);
+
+      } else {
+        track.track.start();
+      }
     })
   }
 
@@ -285,7 +331,9 @@ class Solo extends React.Component {
   }
 
   audioStop(track) {
-    track.disconnect();
+    this.state.tracks.forEach(track => {
+      track.track.disconnect()
+    })
   }
 
   render() {
@@ -323,7 +371,7 @@ class Solo extends React.Component {
                     }
                   }}>
                     <div>{audio.name}</div>
-                    <canvas ref={`canvas${ind}`} width={800} height={300} />
+                    <canvas ref={`canvas${ind}`} width={1250} height={300} />
                   </div>
                   {
                     this.state.selected === ind ? (<FilterList track={audio} addFilter={this.addFilter} removeFilter={this.removeFilter} />) : (<div></div>)
@@ -333,6 +381,18 @@ class Solo extends React.Component {
             })
           }
         </section>
+
+        <section id="carousel">
+          <div id="carousel-text">
+
+          </div>
+          {/*<img className="carousel-image" src="https://www.googleplaymusicdesktopplayer.com/img/par1.jpg" />*/}
+          <canvas className="carousel-image" ref="visualizer" width={1250} height={1250} />
+          <img className="carousel-image hidden" src="images/bg/city.jpg" />
+          <img className="carousel-image hidden" src="images/bg/underwater.jpg" />
+          <img className="carousel-image hidden" src="images/bg/brightsun.jpg" />
+        </section>
+
 
         <section id="mixing-board">
           <button onClick={(evt) => {

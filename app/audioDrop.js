@@ -44,11 +44,14 @@ const AudioDrop = (options) => {
     // start looping to find audio files & folders
     var droppedFiles = Array.prototype.slice.call(e.dataTransfer.files);
     droppedFiles.forEach( function(file) {
-      console.log(file)
       if(isSupportedFormat(file.type)) {
         decodeBuffer(file);
       }
+      else {
+        console.log('that shit dont fucking work')
+      }
     });
+
     return false;
   }
 

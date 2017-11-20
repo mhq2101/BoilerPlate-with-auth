@@ -11,6 +11,7 @@ import  Navbar  from './Navbar'
 import Signup from './Signup.jsx';
 import Home from './Home.jsx';
 import Solo from './Solo.jsx';
+import Visualizations from './Visualizations.jsx'
 import { fetchAudio } from '../redux/reducers/audioStream.jsx';
 // import { joinChatRoom } from '../webRTC/client.jsx';
 // import GMapImage from './VR/GMapImage';
@@ -30,6 +31,7 @@ class Root extends React.Component {
         <Route exact path='/' component={Home} />
         <Route exact path='/login' component={Signup} />
         <Route exact path='/solo' component={Solo} />
+        <Route exact path='/visualizations' component={Visualizations} />
       </Switch>
 			</div >
 		)

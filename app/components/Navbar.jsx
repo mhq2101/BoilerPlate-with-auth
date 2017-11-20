@@ -16,22 +16,22 @@ class Navbar extends React.Component {
     return (
       <div>
         <div id="start-logo">
-           <Link to="/" >
-           <img alt="logo" src="images/WebDAW.png" />
-           </Link>
+          <Link to="/" >
+            <img alt="logo" src="images/WebDAW.png" />
+          </Link>
         </div>
         <header>
           <div className="logo">
             <Link to="/" >
-           <img alt="logo" src="images/WebDAW.png" />
-           </Link>
+              <img alt="logo" src="images/WebDAW.png" />
+            </Link>
           </div>
           <nav>
             <div className="nav-item">
-              <a href="#">About</a>
+              <a href="#">The ting go skrrrraa</a>
             </div>
             <div className="nav-item">
-              <a href="#">Features</a>
+              <NavLink to="/visualizations" activeClassName="active">Visualizations</NavLink>
             </div>
             <div className="nav-item">
               <NavLink to="/solo" activeClassName="active">Solo Project</NavLink>
@@ -57,4 +57,4 @@ class Navbar extends React.Component {
 // const mapDispatch = { login, logout, signup }
 
 
-export default connect(null, null)(Navbar);
+export default connect(null)(Navbar);
